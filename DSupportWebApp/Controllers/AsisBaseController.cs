@@ -10,34 +10,22 @@ using DSupportWebApp.Models;
 
 namespace DSupportWebApp.Controllers
 {
-    public interface IAsisObject
-    {
-        Type GetAsisObjectModelType();
-        object FindAsisObjectModel(string controllerName, int id);
-
-        int IDUser { get;}
-        int IDAttRecordOperation { get; set; }
-        object previousRecord { get; set; }
-        object currentRecord { get; set; }
-    }
-
     public class AsisBaseController : Controller, IAsisObject
     {
         public bool IsPostBack { get; set; }
 
+        //IAsisObject
         public int IDUser => Convert.ToInt32 (Session["IDUser"]);
-
-        public int IDAttRecordOperation { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        public object previousRecord { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public object currentRecord { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int IDAttRecordOperation { get; set; }
+        public object previousRecord { get; set; }
+        public object currentRecord { get; set;}
 
         private static dsupportwebappEntities db = new dsupportwebappEntities();
 
         // GET: AsisBase
         public ActionResult Intialize(ActionResult result, string prefix, int IDControllerView)
         {
-            TranslateController(prefix, IDControllerView);
+            //TranslateController(prefix, IDControllerView);
             return CheckAuthorisation(result);
         }
 
@@ -50,6 +38,12 @@ namespace DSupportWebApp.Controllers
                 if (filterContext.ActionParameters.Count > 0)
                 {
                     IsPostBack = ((System.Web.HttpRequestWrapper)((System.Web.HttpContextWrapper)filterContext.HttpContext).Request).HttpMethod == "POST";
+
+                    if (IsPostBack)
+                    {
+                        var id = Convert.ToInt32(filterContext.RouteData.Values["id"]);
+                        this.previousRecord = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+                    }
 
                     if (!IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit" &&
                         filterContext.ActionParameters.Where(n => n.Key == "id").Any())
@@ -71,15 +65,16 @@ namespace DSupportWebApp.Controllers
 
         protected override void OnActionExecuted(ActionExecutedContext filterContext)
         {
+
             if (GetAsisObjectModelType() != null)
             {
                 if (IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit")
                 {
-                    var asis_object = ((System.Web.Mvc.ViewResultBase)filterContext.Result).Model;
-                    if (asis_object != null)
-                    {
-                        AfterEdit(asis_object, 1, Convert.ToInt32(Session["IDUser"]), filterContext.ActionDescriptor.ControllerDescriptor.ControllerName /*b.v.: "asis_param"*/);
-                    }
+                    //var asis_object = ((System.Web.Mvc.ViewResultBase)filterContext.Result).Model;
+                    //if (asis_object != null)
+                    //{
+                    //    AfterEdit(asis_object, 1, Convert.ToInt32(Session["IDUser"]), filterContext.ActionDescriptor.ControllerDescriptor.ControllerName /*b.v.: "asis_param"*/);
+                    //}
                 }
             }
 
