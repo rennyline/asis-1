@@ -125,7 +125,7 @@ namespace DSupportWebApp.Models
                 var prevFieldValue = Convert.ToString(propPrev.GetValue(previousRecord));
 
                 var fieldName = prop.Name;
-                var fieldValue = Convert.ToString(prop.GetValue(previousRecord));
+                var fieldValue = Convert.ToString(prop.GetValue(currentRecord));
                 if (index == 0)
                 {
                     IDRecord = Convert.ToInt32(fieldValue);

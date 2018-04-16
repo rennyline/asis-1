@@ -23,12 +23,18 @@
         {
            
             var modifiedEntities = ChangeTracker.Entries()
-                .Where(p => p.State == EntityState.Added || p.State == EntityState.Modified || p.State == EntityState.Deleted).ToList();
+                .Where(p => p.Entity.GetType().Name != "asis_tablelog" && (p.State == EntityState.Added || p.State == EntityState.Modified || p.State == EntityState.Deleted)).ToList();
             var now = DateTime.UtcNow;
             
             foreach (var change in modifiedEntities)
             {
                 var entityName = change.Entity.GetType().Name;
+
+                //if (entityName == "asis_tablelog")
+                //{
+                //    continue;
+                //}
+                
                 asisObject.currentRecord = change.Entity;
                 
                 switch (change.State)

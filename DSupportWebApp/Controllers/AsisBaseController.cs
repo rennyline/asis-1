@@ -45,22 +45,21 @@ namespace DSupportWebApp.Controllers
                 {
                     IsPostBack = ((System.Web.HttpRequestWrapper)((System.Web.HttpContextWrapper)filterContext.HttpContext).Request).HttpMethod == "POST";
 
-                    //if (IsPostBack)
-                    //{
-                    //    var id = Convert.ToInt32(filterContext.RouteData.Values["id"]);
-                    //    this.previousRecord = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
-                    //}
+                    if (IsPostBack)
+                    {
+                        var id = Convert.ToInt32(filterContext.RouteData.Values["id"]);
+                        this.previousRecord = Session["prevRecord"]; //FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+                    }
 
                     if (!IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit" &&
                         filterContext.ActionParameters.Where(n => n.Key == "id").Any())
                     {
                         var id = Convert.ToInt32(filterContext.ActionParameters["id"]);
-                        //var asis_object = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
-
-                        //if (asis_object != null)
-                        //{
-                        //    BeforeEdit(asis_object);
-                        //}
+                        var asis_object = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+                        if (asis_object != null)
+                        {
+                            BeforeEdit(asis_object);
+                        }
                     }
                 }
             }
@@ -151,30 +150,24 @@ namespace DSupportWebApp.Controllers
         {
 
         }
+
         public virtual object FindAsisObjectModel(string controllerName, int id)
         {
-            return db.asis_param.Find(id);
+            //RL: Opmerking: Dit is net alsof wij db.asis_param.Find(id) uitvoeren
 
+            //asis_object_type.FindMembers(MemberTypes.All, BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance, null, null)
+            var asis_object_members = db.GetType().GetMember(controllerName);
+            var asis_object_type = ((System.Reflection.PropertyInfo)asis_object_members[0]).PropertyType;
+            var asis_object_instance = ((System.Reflection.PropertyInfo)asis_object_members[0]).GetValue(db);
 
+            object asis_object = (object)(asis_object_type.InvokeMember(
+                                   "Find",
+                                   BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance,
+                                   null,
+                                   asis_object_instance,
+                                   new object[] { id }));
+            return asis_object;
         }
-
-        //public virtual object FindAsisObjectModel(string controllerName, int id)
-        //{
-        //    //RL: Opmerking: Dit is net alsof wij db.asis_param.Find(id) uitvoeren
-
-        //    //asis_object_type.FindMembers(MemberTypes.All, BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance, null, null)
-        //    var asis_object_members = db.GetType().GetMember(controllerName);
-        //    var asis_object_type = ((System.Reflection.PropertyInfo)asis_object_members[0]).PropertyType;
-        //    var asis_object_instance = ((System.Reflection.PropertyInfo)asis_object_members[0]).GetValue(db);
-
-        //    object asis_object = (object)(asis_object_type.InvokeMember(
-        //                           "Find",
-        //                           BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance,
-        //                           null,
-        //                           asis_object_instance,
-        //                           new object[] { id }));
-        //    return asis_object;
-        //}
 
         public virtual Type GetAsisObjectModelType()
         {
