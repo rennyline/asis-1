@@ -20,7 +20,13 @@ namespace DSupportWebApp.Controllers
         public object previousRecord { get; set; }
         public object currentRecord { get; set;}
 
-        private static dsupportwebappEntities db = new dsupportwebappEntities();
+        public  dsupportwebappEntities db = new dsupportwebappEntities();
+
+        public AsisBaseController() {
+            db.asisObject = this;
+        }
+
+
 
         // GET: AsisBase
         public ActionResult Intialize(ActionResult result, string prefix, int IDControllerView)
@@ -39,23 +45,22 @@ namespace DSupportWebApp.Controllers
                 {
                     IsPostBack = ((System.Web.HttpRequestWrapper)((System.Web.HttpContextWrapper)filterContext.HttpContext).Request).HttpMethod == "POST";
 
-                    if (IsPostBack)
-                    {
-                        var id = Convert.ToInt32(filterContext.RouteData.Values["id"]);
-                        this.previousRecord = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
-                    }
+                    //if (IsPostBack)
+                    //{
+                    //    var id = Convert.ToInt32(filterContext.RouteData.Values["id"]);
+                    //    this.previousRecord = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+                    //}
 
                     if (!IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit" &&
                         filterContext.ActionParameters.Where(n => n.Key == "id").Any())
                     {
                         var id = Convert.ToInt32(filterContext.ActionParameters["id"]);
-                        //var asis_object = FindAsisObjectModel(filterContext.ActionDescriptor.ControllerDescriptor.ControllerName, id);
-                        var asis_object = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+                        //var asis_object = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
 
-                        if (asis_object != null)
-                        {
-                            BeforeEdit(asis_object);
-                        }
+                        //if (asis_object != null)
+                        //{
+                        //    BeforeEdit(asis_object);
+                        //}
                     }
                 }
             }
