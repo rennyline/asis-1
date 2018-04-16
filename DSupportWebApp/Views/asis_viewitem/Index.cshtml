@@ -1,0 +1,69 @@
+﻿@model IEnumerable<DSupportWebApp.Models.asis_viewitem>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.IDView)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.SortID)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Words)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IDUserCreated)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IDUserModified)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.DateCreated)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.DateModified)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.IDView)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.SortID)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Words)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IDUserCreated)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IDUserModified)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.DateCreated)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.DateModified)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.IDViewItem }) |
+            @Html.ActionLink("Details", "Details", new { id=item.IDViewItem }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.IDViewItem })
+        </td>
+    </tr>
+}
+
+</table>
