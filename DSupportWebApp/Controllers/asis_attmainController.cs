@@ -12,13 +12,17 @@ namespace DSupportWebApp.Controllers
 {
     public class asis_attmainController : AsisBaseController
     {
-        private dsupportwebappEntities db = new dsupportwebappEntities();
+        public override Type GetAsisObjectModelType()
+        {
+            base.GetAsisObjectModelType();
+            return typeof(asis_attmain);
+        }
+
 
         // GET: asis_attmain
         public ActionResult Index()
         {
-            var result = View(db.asis_attmain.ToList());
-            return base.Intialize(result, "asis", 1);
+             return View(db.asis_attmain.ToList());
         }
 
         // GET: asis_attmain/Details/5
@@ -91,7 +95,7 @@ namespace DSupportWebApp.Controllers
             {
                 db.Entry(asis_attmain).State = EntityState.Modified;
 
-                base.BeforeSave(asis_attmain);
+                //base.BeforeSave(asis_attmain);
                 db.SaveChanges();
 
                 base.AfterEdit(asis_attmain, 1, Convert.ToInt32(Session["IDUser"]), "asis_attmain");

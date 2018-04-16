@@ -10,35 +10,95 @@ using DSupportWebApp.Models;
 
 namespace DSupportWebApp.Controllers
 {
-
-    public class AsisBaseController : Controller
+    public interface IAsisObject
     {
-           private static dsupportwebappEntities db = new dsupportwebappEntities();
+        Type GetAsisObjectModelType();
+        object FindAsisObjectModel(string controllerName, int id);
+
+        int IDUser { get;}
+        int IDAttRecordOperation { get; set; }
+        object previousRecord { get; set; }
+        object currentRecord { get; set; }
+    }
+
+    public class AsisBaseController : Controller, IAsisObject
+    {
+        public bool IsPostBack { get; set; }
+
+        public int IDUser => Convert.ToInt32 (Session["IDUser"]);
+
+        public int IDAttRecordOperation { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public object previousRecord { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public object currentRecord { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        private static dsupportwebappEntities db = new dsupportwebappEntities();
 
         // GET: AsisBase
         public ActionResult Intialize(ActionResult result, string prefix, int IDControllerView)
         {
-            //TranslateController(prefix, IDControllerView);
-            if (Convert.ToString(Session["asisLangCode"]) != "EN")
-            {
-                //TranslateController();
-            }
+            TranslateController(prefix, IDControllerView);
             return CheckAuthorisation(result);
         }
 
-        private void TranslateController()
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (GetAsisObjectModelType() != null)
+            {
+                Intialize(null, "asis", 1);
+
+                if (filterContext.ActionParameters.Count > 0)
+                {
+                    IsPostBack = ((System.Web.HttpRequestWrapper)((System.Web.HttpContextWrapper)filterContext.HttpContext).Request).HttpMethod == "POST";
+
+                    if (!IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit" &&
+                        filterContext.ActionParameters.Where(n => n.Key == "id").Any())
+                    {
+                        var id = Convert.ToInt32(filterContext.ActionParameters["id"]);
+                        //var asis_object = FindAsisObjectModel(filterContext.ActionDescriptor.ControllerDescriptor.ControllerName, id);
+                        var asis_object = FindAsisObjectModel(GetAsisObjectModelType().Name, id);
+
+                        if (asis_object != null)
+                        {
+                            BeforeEdit(asis_object);
+                        }
+                    }
+                }
+            }
+
+            base.OnActionExecuting(filterContext);
+        }
+
+        protected override void OnActionExecuted(ActionExecutedContext filterContext)
+        {
+            if (GetAsisObjectModelType() != null)
+            {
+                if (IsPostBack && filterContext.ActionDescriptor.ActionName == "Edit")
+                {
+                    var asis_object = ((System.Web.Mvc.ViewResultBase)filterContext.Result).Model;
+                    if (asis_object != null)
+                    {
+                        AfterEdit(asis_object, 1, Convert.ToInt32(Session["IDUser"]), filterContext.ActionDescriptor.ControllerDescriptor.ControllerName /*b.v.: "asis_param"*/);
+                    }
+                }
+            }
+
+            base.OnActionExecuted(filterContext);
+        }
+
+        private void TranslateController(string prefix, int IDControllerView)
         {
             //ViewBag.EditText = "Bewerk";
             //ViewBag.DeleteText = "Verwijder";
             //ViewBag.BackToListText = "Terug naar de lijst";
             //object ds = null;
             string strSQL = "";
-            strSQL += "SELECT NameEN, ";
             strSQL += "SELECT Name{0} ";
-            strSQL += "FROM asis_translate";
+            strSQL += "FROM {1}_ControllerViewTranslate";
             strSQL += "WHERE IDControllerView={2} ";
-            strSQL = string.Format(strSQL, Session["asisLangCode"] as string);
-            var ds = AsisModelHelper.GetDataSet(strSQL);
+            strSQL += "ORDER BY SortID";
+            strSQL = string.Format(strSQL, Session["asisLangCode"] as string, prefix, IDControllerView);
+            //var ds = AsisModelHelper.GetDataSet(strSQL);
 
             ViewBag.label = new List<string>();
 
@@ -87,123 +147,38 @@ namespace DSupportWebApp.Controllers
             Session["prevRecord"] = record;
         }
 
-
-        internal void BeforeSave(object record)
-        {
-            foreach (PropertyInfo prop in record.GetType().GetProperties())
-            {
-                var fieldName = prop.Name;
-
-                var fieldValue = 0;
-                if (fieldName == "IDUserCModified")
-                {
-                    fieldValue = Convert.ToInt32(Session["IDUser"]);
-                    prop.SetValue(record,fieldValue);
-                }
-
-
-            }
-
-        }
-
         internal void AfterEdit(object record, int IDAttRecordOperation, int IDUser, string tableName)
         {
 
-            int IDAsisTableList = GetAsisTableID(tableName);
-            if (!HasHistory(IDAsisTableList))
-            {
-                return; //deze tabel heeft geen history, ER UIT!!!!!
-            }
-
-            //int IDUser = 1;
-            //int IDAttRecordOperation = 1;
-            DateTime DateOperation = DateTime.Now;
-            string lblPrevious = AsisModelHelper.GetMessage(2, "asis", Convert.ToString(Session["asisLangCode"]));
-            string lblCurrent = AsisModelHelper.GetMessage(3, "asis", Convert.ToString(Session["asisLangCode"]));
-            string LF = "\n";
-            //IDParam,KeyNL,KeyEN,Value,IDUserCreated,IDUserModified,DateCreated,DateModified
-
-            //var lastRecord = Session["lastRecord"] as asis_param;
-            //var currentRecord = record as asis_param;
-            //bool isModified = (lastRecord.IDParam != currentRecord.IDParam);
-
-            //var propObject = data.Result[0];
-            //var propInfo = propObject.GetType().GetProperty(fieldName);
-            //var message = propInfo.GetValue(propObject);
-            string strHistory = "";
-
-            var index = 0;
-            int IDRecord = 0;
-            var prevRecord = Session["prevRecord"];
-            foreach (PropertyInfo prop in record.GetType().GetProperties())
-            {
-                PropertyInfo propPrev = prevRecord.GetType().GetProperties()[index];
-                var prevFieldName = propPrev.Name;
-                var prevFieldValue = Convert.ToString(propPrev.GetValue(prevRecord));
-
-                var fieldName = prop.Name;
-                var fieldValue = Convert.ToString(prop.GetValue(record));
-                if (index == 0)
-                {
-                    IDRecord = Convert.ToInt32(fieldValue);
-                }
-
-                bool isModified = (fieldValue != prevFieldValue);
-                if (isModified)
-                {
-                    strHistory += string.Format(lblPrevious, prevFieldName, prevFieldValue);
-                    strHistory += LF;
-                    strHistory += string.Format(lblCurrent, fieldName, fieldValue);
-                    strHistory += LF;
-                }
-
-                index++;
-            }
-
-            if (!SaveHistory(IDAsisTableList, IDRecord, Convert.ToInt32(Session["IDUser"]), IDAttRecordOperation, DateTime.Now, strHistory))
-            {
-                RedirectToAction("Index","AsisError", new {
-                    IDMessage=6,
-                    prefix = "asis",
-                });
-            }
         }
-
-        private int GetAsisTableID(string tableName)
+        public virtual object FindAsisObjectModel(string controllerName, int id)
         {
-            var IDTableList = db.asis_tablelist.Where(i => i.TableName == tableName).Select(l => l.IDAsisTableList).SingleOrDefault();
-            //var IDTableList = 6; 
+            return db.asis_param.Find(id);
 
-            return IDTableList;
+
         }
 
-        private bool HasHistory(int IDAsisTableList)
+        //public virtual object FindAsisObjectModel(string controllerName, int id)
+        //{
+        //    //RL: Opmerking: Dit is net alsof wij db.asis_param.Find(id) uitvoeren
+
+        //    //asis_object_type.FindMembers(MemberTypes.All, BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance, null, null)
+        //    var asis_object_members = db.GetType().GetMember(controllerName);
+        //    var asis_object_type = ((System.Reflection.PropertyInfo)asis_object_members[0]).PropertyType;
+        //    var asis_object_instance = ((System.Reflection.PropertyInfo)asis_object_members[0]).GetValue(db);
+
+        //    object asis_object = (object)(asis_object_type.InvokeMember(
+        //                           "Find",
+        //                           BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Instance,
+        //                           null,
+        //                           asis_object_instance,
+        //                           new object[] { id }));
+        //    return asis_object;
+        //}
+
+        public virtual Type GetAsisObjectModelType()
         {
-            var hasHistory = db.asis_tablelist.Where(i => i.IDAsisTableList == IDAsisTableList).Select(l => l.HasHistory).Any();
-            return hasHistory;
+            return null;
         }
-
-        private bool SaveHistory(int IDAsisTableList, int RecordID, int IDUser, int IDAttRecordOperation, DateTime dateOperation, string strHistory)
-        {
-            bool saved = false;
-
-            //var log = db.asis_tablelog.Find(RecordID);
-            //log.IDUser = 1;
-            //db.SaveChanges();
-
-            db.asis_tablelog.Add(new asis_tablelog {
-                IDAsisTableList = IDAsisTableList,
-                RecordID = RecordID,
-                IDUser = IDUser,
-                IDAttRecordOperation = IDAttRecordOperation,
-                DateOperation = dateOperation,
-                Logchange = strHistory 
-            });
-
-            saved = db.SaveChanges() > 0;
-
-            return saved;
-        }
-
     }
 }
