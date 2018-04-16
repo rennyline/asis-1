@@ -17,6 +17,12 @@ namespace DSupportWebApp.Controllers
         // GET: asis_tablelog
         public ActionResult Index()
         {
+            //ViewBag.mijnLijst = new List<string>();
+            //ViewBag.mijnLijst.Add("Bewerk");
+
+            //ViewBag.mijnLijst = new Dictionary<string, string>();
+            //ViewBag.mijnLijst.Add("Edit", "Bewerk");
+
             return View(db.asis_tablelog.ToList());
         }
 
@@ -82,7 +88,7 @@ namespace DSupportWebApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                asis_tablelog.Logchange = AsisLibrary.AsisHtmlHelper.StripHTML((asis_tablelog.Logchange));
+                //asis_tablelog.Logchange = AsisLibrary.AsisHtmlHelper.StripHTML((asis_tablelog.Logchange));
 
                 db.Entry(asis_tablelog).State = EntityState.Modified;
                 db.SaveChanges();

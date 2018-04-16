@@ -11,15 +11,11 @@ namespace DSupportWebApp.Models
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.Web.Mvc;
+
     public partial class asis_tablelog
     {
-        public int IDAsisTableLog { get; set; }
-        public int IDAsisTableList { get; set; }
-        public int RecordID { get; set; }
-        public int IDUser { get; set; }
-        public int IDAttRecordOperation { get; set; }
-        public System.DateTime DateOperation { get; set; }
-        //public string Logchange { get; set; }
+        [AllowHtml]
+        public string Logchange { get; set; }
     }
 }
